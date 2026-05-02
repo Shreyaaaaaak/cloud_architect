@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud Architect 🏗️</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --bg:#080812; --sidebar:#0d0d1e; --canvas:#0a0a18;
+    --border:#1a1a35; --accent:#4f8eff; --accent2:#a855f7;
+    --text:#d0d4f0; --dim:#3a3a60; --green:#22d37a;
+    --yellow:#fbbf24; --red:#ff4757;
+    --mono:'JetBrains Mono',monospace; --display:'Syne',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--mono);}
+  #app{height:100vh;display:grid;grid-template-rows:52px 1fr;}
+
+  /* Header */
+  #header{background:#09091a;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:10px;z-index:10;flex-wrap:wrap;}
+  #header h1{font-family:var(--display);font-size:17px;font-weight:800;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;}
+  .header-badge{font-size:9px;padding:3px 7px;border-radius:20px;background:var(--border);color:var(--dim);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
+  .header-actions{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  #api-key-input{background:var(--sidebar);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;width:190px;transition:border-color 0.2s;}
+  #api-key-input:focus{border-color:var(--accent);}
+  #api-status{font-size:10px;padding:3px 8px;border-radius:20px;background:var(--sidebar);white-space:nowrap;}
+  #api-status.ready{color:var(--green);}
+  #api-status.missing{color:var(--red);}
+
+  .btn{border:none;border-radius:6px;padding:6px 12px;font-family:var(--mono);font-size:11px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+  .btn-ghost{background:var(--border);color:var(--dim);}
+  .btn-ghost:hover{background:#252545;color:var(--text);}
+  .btn-connect{background:#22d37a22;color:var(--green);border:1px solid #22d37a33;}
+  .btn-connect.active{background:#22d37a44;border-color:var(--green);color:#fff;}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-weight:600;}
+  .btn-primary:hover{opacity:0.85;transform:translateY(-1px);}
+  .btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+  .btn-export{background:#fbbf2422;color:var(--yellow);border:1px solid #fbbf2433;}
+  .btn-export:hover{background:#fbbf2433;}
+
+  /* Body */
+  #body{display:grid;grid-template-columns:220px 1fr;overflow:hidden;}
+  #sidebar{background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+  .sidebar-top{padding:8px 10px 6px;font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--dim);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .sidebar-search{margin:8px;position:relative;}
+  .sidebar-search input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px 6px 28px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;}
+  .sidebar-search input:focus{border-color:var(--accent);}
+  .sidebar-search::before{content:'🔍';position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;}
+  #service-list{flex:1;overflow-y:auto;padding:4px 6px;display:flex;flex-direction:column;gap:3px;}
+  .service-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;border:1px solid transparent;cursor:grab;transition:all 0.12s;user-select:none;}
+  .service-item:hover{background:var(--border);border-color:#252545;}
+  .service-item.hidden{display:none;}
+  .service-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .service-name{font-size:11px;color:var(--text);font-weight:600;}
+  .service-desc{font-size:9px;color:var(--dim);margin-top:1px;}
+  .category-label{padding:6px 8px 2px;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);}
+
+  /* Saved diagrams list */
+  #saved-list{padding:6px 8px;border-top:1px solid var(--border);max-height:140px;overflow-y:auto;}
+  .saved-title{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);padding:4px 0 6px;}
+  .saved-item{display:flex;align-items:center;justify-content:space-between;padding:5px 6px;border-radius:6px;font-size:10px;color:var(--text);cursor:pointer;transition:background 0.1s;}
+  .saved-item:hover{background:var(--border);}
+  .saved-item-del{color:var(--dim);cursor:pointer;font-size:11px;padding:0 4px;}
+  .saved-item-del:hover{color:var(--red);}
+
+  /* Canvas area */
+  #canvas-area{position:relative;overflow:hidden;background:var(--canvas);display:flex;}
+  #canvas-wrap{position:relative;flex:1;overflow:hidden;}
+  #canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
+  #canvas-wrap.drag-over #canvas{box-shadow:inset 0 0 0 2px var(--accent);}
+  #canvas-wrap.connect-mode{cursor:crosshair;}
+
+  #status-bar{position:absolute;bottom:0;left:0;right:0;height:26px;background:rgba(8,8,18,0.95);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:16px;font-size:10px;color:var(--dim);z-index:5;}
+  #status-bar span{color:var(--text);}
+
+  #empty-hint{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none;transition:opacity 0.3s;}
+  .big{font-size:44px;opacity:0.15;}.msg{font-family:var(--display);font-size:15px;color:var(--dim);opacity:0.2;}.sub{font-size:10px;color:var(--dim);opacity:0.15;}
+
+  #connect-hint{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#22d37a18;border:1px solid #22d37a44;color:var(--green);font-size:11px;padding:5px 14px;border-radius:20px;display:none;z-index:10;pointer-events:none;}
+  #connect-hint.show{display:block;}
+
+  /* Mini-map */
+  #minimap{position:absolute;bottom:34px;right:10px;width:150px;height:100px;background:#09091aee;border:1px solid var(--border);border-radius:6px;z-index:6;overflow:hidden;}
+  #minimap canvas{width:100%;height:100%;}
+
+  /* Tooltip */
+  #tooltip{position:absolute;background:#111130;border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:11px;pointer-events:none;z-index:20;display:none;max-width:220px;line-height:1.6;}
+  #tooltip.show{display:block;}
+
+  /* Review panel */
+  #review-panel{width:0;background:#09091f;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width 0.3s cubic-bezier(0.4,0,0.2,1);flex-shrink:0;}
+  #review-panel.open{width:360px;}
+  .review-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:#0b0b1e;}
+  .review-title{font-family:var(--display);font-size:13px;font-weight:800;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  #review-body{flex:1;overflow-y:auto;padding:14px;font-size:12px;line-height:1.8;color:var(--text);}
+  .review-section{margin-bottom:14px;padding:12px;border-radius:8px;border:1px solid var(--border);background:#0d0d22;}
+  .review-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+  .review-text{white-space:pre-wrap;font-size:11px;color:#aab0d0;line-height:1.8;}
+  .score-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:10px;}
+  .score-high{background:#22d37a22;color:var(--green);border:1px solid #22d37a44;}
+  .score-mid{background:#fbbf2422;color:var(--yellow);border:1px solid #fbbf2444;}
+  .score-low{background:#ff475722;color:var(--red);border:1px solid #ff475744;}
+  .cursor{display:inline-block;width:2px;height:12px;background:var(--accent);margin-left:2px;vertical-align:middle;animation:blink 0.7s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+  .spinner{width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .review-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;opacity:0.3;text-align:center;padding:20px;}
+
+  /* Toast */
+  #toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:#111130;border:1px solid var(--border);border-radius:8px;padding:8px 18px;font-size:12px;color:var(--text);z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;}
+  #toast.show{opacity:1;}
+
+  /* Save modal */
+  #modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:center;justify-content:center;}
+  #modal-overlay.show{display:flex;}
+  #modal{background:#0d0d22;border:1px solid var(--border);border-radius:10px;padding:24px;width:320px;}
+  #modal h3{font-family:var(--display);font-size:15px;margin-bottom:14px;color:var(--text);}
+  #modal input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;margin-bottom:14px;}
+  #modal input:focus{border-color:var(--accent);}
+  .modal-btns{display:flex;gap:8px;justify-content:flex-end;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <h1>☁️ Cloud Architect</h1>
+    <span class="header-badge">AWS</span>
+    <input type="password" id="api-key-input" placeholder="sk-ant-... API key">
+    <span id="api-status" class="missing">● no key</span>
+    <div class="header-actions">
+      <button class="btn btn-connect"  id="connect-btn">🔗 Connect</button>
+      <button class="btn btn-ghost"    id="undo-btn">↩ Undo</button>
+      <button class="btn btn-ghost"    id="clear-btn">🗑 Clear</button>
+      <button class="btn btn-export"   id="save-btn">💾 Save</button>
+      <button class="btn btn-export"   id="export-btn">📸 Export PNG</button>
+      <button class="btn btn-primary"  id="ai-btn">✨ AI Review</button>
+    </div>
+  </div>
+
+  <div id="body">
+    <div id="sidebar">
+      <div class="sidebar-top">
+        ☁️ AWS Services
+        <span id="svc-count" style="font-size:9px;color:var(--dim)"></span>
+      </div>
+      <div class="sidebar-search">
+        <input type="text" id="search-input" placeholder="Search services...">
+      </div>
+      <div id="service-list"></div>
+      <div id="saved-list">
+        <div class="saved-title">💾 Saved Diagrams</div>
+        <div id="saved-items"></div>
+      </div>
+    </div>
+
+    <div id="canvas-area">
+      <div id="canvas-wrap">
+        <canvas id="canvas"></canvas>
+        <div id="empty-hint">
+          <div class="big">🏗️</div>
+          <div class="msg">Drag services onto the canvas</div>
+          <div class="sub">Build your cloud architecture</div>
+        </div>
+        <div id="connect-hint">🔗 Click source node, then target node</div>
+        <div id="minimap"><canvas id="minimap-canvas"></canvas></div>
+        <div id="tooltip"></div>
+        <div id="status-bar">
+          Nodes: <span id="stat-nodes">0</span>
+          &nbsp;|&nbsp; Connections: <span id="stat-conn">0</span>
+          &nbsp;|&nbsp; <span id="stat-hint">Drag a service to get started</span>
+        </div>
+      </div>
+
+      <div id="review-panel">
+        <div class="review-header">
+          <span class="review-title">✨ AI Architecture Review</span>
+          <button class="btn btn-ghost" id="close-review">✕</button>
+        </div>
+        <div id="review-body">
+          <div class="review-placeholder">
+            <div style="font-size:32px">🤖</div>
+            <div style="font-size:11px;color:var(--dim);line-height:1.6">Click "AI Review" to get expert AWS architecture feedback from Claude</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Save modal -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h3>💾 Save Diagram</h3>
+    <input type="text" id="diagram-name" placeholder="My Architecture" maxlength="40">
+    <div class="modal-btns">
+      <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ── Services catalog ──────────────────────────────────────────────
+const AWS_SERVICES = [
+  {category:'Compute', id:'ec2',        name:'EC2',          desc:'Virtual servers',      emoji:'🖥️', color:'#FF9900',bg:'#FF990022'},
+  {category:'Compute', id:'lambda',     name:'Lambda',       desc:'Serverless functions', emoji:'⚡', color:'#FF9900',bg:'#FF990022'},
+  {category:'Compute', id:'ecs',        name:'ECS',          desc:'Container service',    emoji:'🐳', color:'#FF9900',bg:'#FF990022'},
+  {category:'Compute', id:'eks',        name:'EKS',          desc:'Kubernetes service',   emoji:'☸️', color:'#FF9900',bg:'#FF990022'},
+  {category:'Storage', id:'s3',         name:'S3',           desc:'Object storage',       emoji:'🪣', color:'#3F8624',bg:'#3F862422'},
+  {category:'Storage', id:'ebs',        name:'EBS',          desc:'Block storage',        emoji:'💾', color:'#3F8624',bg:'#3F862422'},
+  {category:'Storage', id:'efs',        name:'EFS',          desc:'Elastic file system',  emoji:'📁', color:'#3F8624',bg:'#3F862422'},
+  {category:'Database',id:'rds',        name:'RDS',          desc:'Relational database',  emoji:'🗄️', color:'#C7131F',bg:'#C7131F22'},
+  {category:'Database',id:'dynamodb',   name:'DynamoDB',     desc:'NoSQL database',       emoji:'⚡🗄️',color:'#C7131F',bg:'#C7131F22'},
+  {category:'Database',id:'elasticache',name:'ElastiCache',  desc:'In-memory cache',      emoji:'🔄', color:'#C7131F',bg:'#C7131F22'},
+  {category:'Network', id:'vpc',        name:'VPC',          desc:'Virtual network',      emoji:'🔒', color:'#8C4FFF',bg:'#8C4FFF22'},
+  {category:'Network', id:'elb',        name:'Load Balancer',desc:'Traffic distribution', emoji:'⚖️', color:'#8C4FFF',bg:'#8C4FFF22'},
+  {category:'Network', id:'cloudfront', name:'CloudFront',   desc:'CDN',                  emoji:'🌐', color:'#8C4FFF',bg:'#8C4FFF22'},
+  {category:'Network', id:'route53',    name:'Route 53',     desc:'DNS service',          emoji:'🔀', color:'#8C4FFF',bg:'#8C4FFF22'},
+  {category:'Security',id:'iam',        name:'IAM',          desc:'Access management',    emoji:'🛡️', color:'#DD344C',bg:'#DD344C22'},
+  {category:'Security',id:'waf',        name:'WAF',          desc:'Web app firewall',     emoji:'🧱', color:'#DD344C',bg:'#DD344C22'},
+  {category:'Security',id:'kms',        name:'KMS',          desc:'Key management',       emoji:'🔑', color:'#DD344C',bg:'#DD344C22'},
+  {category:'App',     id:'apigateway', name:'API Gateway',  desc:'API management',       emoji:'🚪', color:'#A166FF',bg:'#A166FF22'},
+  {category:'App',     id:'sqs',        name:'SQS',          desc:'Message queue',        emoji:'📬', color:'#A166FF',bg:'#A166FF22'},
+  {category:'App',     id:'sns',        name:'SNS',          desc:'Notifications',        emoji:'📢', color:'#A166FF',bg:'#A166FF22'},
+  {category:'App',     id:'cloudwatch', name:'CloudWatch',   desc:'Monitoring',           emoji:'📊', color:'#A166FF',bg:'#A166FF22'},
+  {category:'App',     id:'cognito',    name:'Cognito',      desc:'User authentication',  emoji:'👤', color:'#A166FF',bg:'#A166FF22'},
+]
+const SERVICE_MAP = Object.fromEntries(AWS_SERVICES.map(s=>[s.id,s]))
+
+// ── State ─────────────────────────────────────────────────────────
+const state = { nodes:[], connections:[] }
+let uidCounter=0, dashOffset=0
+let connectMode=false, connectFrom=null
+let dragTarget=null, dragOffsetX=0, dragOffsetY=0
+let hoveredNode=null
+const NODE_W=110, NODE_H=70, DOT_GAP=28
+
+// Undo stack — stores snapshots of state
+const undoStack = []
+function pushUndo() {
+  undoStack.push(JSON.stringify(state))
+  if(undoStack.length>30) undoStack.shift()
+}
+function undo() {
+  if(!undoStack.length) return
+  const prev = JSON.parse(undoStack.pop())
+  state.nodes = prev.nodes
+  state.connections = prev.connections
+  toast('↩ Undone')
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────
+const serviceList = document.getElementById('service-list')
+let lastCat=''
+for(const svc of AWS_SERVICES){
+  if(svc.category!==lastCat){
+    const l=document.createElement('div')
+    l.className='category-label'; l.textContent=svc.category
+    serviceList.appendChild(l); lastCat=svc.category
+  }
+  const item=document.createElement('div')
+  item.className='service-item'; item.draggable=true
+  item.dataset.name=svc.name.toLowerCase()
+  item.dataset.cat=svc.category.toLowerCase()
+  item.innerHTML=`<div class="service-icon" style="background:${svc.bg}">${svc.emoji}</div>
+    <div><div class="service-name">${svc.name}</div><div class="service-desc">${svc.desc}</div></div>`
+  item.addEventListener('dragstart',e=>{
+    e.dataTransfer.setData('serviceId',svc.id)
+    e.dataTransfer.effectAllowed='copy'
+  })
+  serviceList.appendChild(item)
+}
+document.getElementById('svc-count').textContent = AWS_SERVICES.length + ' services'
+
+// Search filter
+document.getElementById('search-input').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase()
+  document.querySelectorAll('.service-item').forEach(el => {
+    const match = el.dataset.name.includes(q) || el.dataset.cat.includes(q)
+    el.classList.toggle('hidden', !match)
+  })
+})
+
+// ── Canvas setup ──────────────────────────────────────────────────
+const canvasWrap     = document.getElementById('canvas-wrap')
+const canvas         = document.getElementById('canvas')
+const ctx            = canvas.getContext('2d')
+const minimapCanvas  = document.getElementById('minimap-canvas')
+const mctx           = minimapCanvas.getContext('2d')
+
+function resizeCanvas() {
+  const dpr=window.devicePixelRatio||1
+  const rect=canvasWrap.getBoundingClientRect()
+  canvas.width=rect.width*dpr; canvas.height=rect.height*dpr
+  canvas.style.width=rect.width+'px'; canvas.style.height=rect.height+'px'
+  ctx.scale(dpr,dpr)
+  minimapCanvas.width=150; minimapCanvas.height=100
+}
+
+// ── Animation loop ────────────────────────────────────────────────
+function animLoop(){
+  dashOffset=(dashOffset+0.3)%20
+  drawAll()
+  requestAnimationFrame(animLoop)
+}
+
+// ── Draw ──────────────────────────────────────────────────────────
+function drawAll(){
+  const W=canvas.clientWidth, H=canvas.clientHeight
+  ctx.clearRect(0,0,W,H)
+  drawGrid(W,H)
+  drawConnections()
+  drawNodes()
+  drawMinimap()
+  updateStats()
+  document.getElementById('empty-hint').style.opacity=state.nodes.length===0?'1':'0'
+}
+
+function drawGrid(W,H){
+  ctx.fillStyle='#1e1e40'
+  for(let x=DOT_GAP;x<W;x+=DOT_GAP)
+    for(let y=DOT_GAP;y<H;y+=DOT_GAP){ctx.beginPath();ctx.arc(x,y,1,0,Math.PI*2);ctx.fill()}
+}
+
+function nodeCenter(n){return{cx:n.x+n.w/2,cy:n.y+n.h/2}}
+
+function drawNode(node){
+  const svc=SERVICE_MAP[node.serviceId]
+  const {x,y,w,h}=node
+  const sel=node===dragTarget, src=node===connectFrom, hov=node===hoveredNode
+  ctx.shadowColor=src?'#22d37a88':sel?svc.color+'88':hov?svc.color+'44':'rgba(0,0,0,0.5)'
+  ctx.shadowBlur=(sel||src)?20:hov?12:8; ctx.shadowOffsetY=3
+  ctx.fillStyle=src?'#0d1f18':sel?'#1a1a38':hov?'#141428':'#12122a'
+  roundRect(ctx,x,y,w,h,10); ctx.fill()
+  ctx.shadowBlur=0; ctx.shadowOffsetY=0
+  ctx.strokeStyle=src?'#22d37a':sel?svc.color:hov?svc.color+'aa':svc.color+'44'
+  ctx.lineWidth=(sel||src)?2:hov?1.5:1; roundRect(ctx,x,y,w,h,10); ctx.stroke()
+  ctx.fillStyle=svc.color+'33'; roundRectTop(ctx,x,y,w,22,10); ctx.fill()
+  ctx.font='15px serif'; ctx.textAlign='left'; ctx.fillStyle='#fff'; ctx.shadowBlur=0
+  ctx.fillText(svc.emoji,x+7,y+15)
+  ctx.font='bold 11px JetBrains Mono,monospace'; ctx.fillStyle='#fff'; ctx.textAlign='left'
+  ctx.fillText(svc.name,x+7,y+37)
+  ctx.font='9px JetBrains Mono,monospace'; ctx.fillStyle=svc.color+'cc'
+  ctx.fillText(svc.desc,x+7,y+51)
+  ctx.fillStyle=svc.color; ctx.beginPath(); ctx.arc(x+w-9,y+9,3,0,Math.PI*2); ctx.fill()
+}
+
+function drawNodes(){for(const n of state.nodes)drawNode(n)}
+
+function drawConnections(){
+  for(const c of state.connections){
+    const from=state.nodes.find(n=>n.uid===c.fromId)
+    const to=state.nodes.find(n=>n.uid===c.toId)
+    if(from&&to)drawConnection(from,to)
+  }
+}
+
+function drawConnection(from,to){
+  const {cx:x1,cy:y1}=nodeCenter(from)
+  const {cx:x2,cy:y2}=nodeCenter(to)
+  const dx=x2-x1,dy=y2-y1
+  const cp1x=x1+dx*0.25,cp1y=y1+Math.abs(dy)*0.4+40
+  const cp2x=x2-dx*0.25,cp2y=y2+Math.abs(dy)*0.4+40
+  ctx.save()
+  ctx.setLineDash([6,6]); ctx.lineDashOffset=-dashOffset
+  ctx.strokeStyle='#4f8effaa'; ctx.lineWidth=2
+  ctx.beginPath(); ctx.moveTo(x1,y1)
+  ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,x2,y2); ctx.stroke()
+  ctx.restore()
+  const angle=Math.atan2(y2-cp2y,x2-cp2x)
+  ctx.strokeStyle='#4f8eff'; ctx.fillStyle='#4f8eff'; ctx.lineWidth=2; ctx.lineCap='round'; ctx.setLineDash([])
+  ctx.beginPath()
+  ctx.moveTo(x2,y2); ctx.lineTo(x2-10*Math.cos(angle-0.45),y2-10*Math.sin(angle-0.45))
+  ctx.moveTo(x2,y2); ctx.lineTo(x2-10*Math.cos(angle+0.45),y2-10*Math.sin(angle+0.45))
+  ctx.stroke()
+  ctx.beginPath(); ctx.arc(x2,y2,3,0,Math.PI*2); ctx.fill()
+}
+
+// ── Minimap ───────────────────────────────────────────────────────
+function drawMinimap(){
+  const MW=150, MH=100
+  mctx.clearRect(0,0,MW,MH)
+  mctx.fillStyle='#09091a'; mctx.fillRect(0,0,MW,MH)
+  if(state.nodes.length===0) return
+  const CW=canvas.clientWidth, CH=canvas.clientHeight
+  const scaleX=MW/CW, scaleY=MH/CH
+  for(const n of state.nodes){
+    const svc=SERVICE_MAP[n.serviceId]
+    mctx.fillStyle=svc.color+'88'
+    mctx.fillRect(n.x*scaleX, n.y*scaleY, n.w*scaleX, n.h*scaleY)
+  }
+  for(const c of state.connections){
+    const from=state.nodes.find(n=>n.uid===c.fromId)
+    const to=state.nodes.find(n=>n.uid===c.toId)
+    if(!from||!to) continue
+    mctx.strokeStyle='#4f8eff88'; mctx.lineWidth=1
+    mctx.beginPath()
+    mctx.moveTo(nodeCenter(from).cx*scaleX, nodeCenter(from).cy*scaleY)
+    mctx.lineTo(nodeCenter(to).cx*scaleX,   nodeCenter(to).cy*scaleY)
+    mctx.stroke()
+  }
+}
+
+// ── Tooltip ───────────────────────────────────────────────────────
+const tooltip = document.getElementById('tooltip')
+function showTooltip(node, mx, my){
+  const svc = SERVICE_MAP[node.serviceId]
+  const conns = state.connections.filter(c=>c.fromId===node.uid||c.toId===node.uid)
+  tooltip.innerHTML = `<strong style="color:${svc.color}">${svc.emoji} ${svc.name}</strong><br>
+    <span style="color:var(--dim)">${svc.desc}</span><br>
+    <span style="color:var(--dim)">Category: ${svc.category}</span><br>
+    <span style="color:var(--dim)">Connections: ${conns.length}</span>`
+  tooltip.style.left = (mx+14)+'px'
+  tooltip.style.top  = (my-10)+'px'
+  tooltip.classList.add('show')
+}
+function hideTooltip(){ tooltip.classList.remove('show') }
+
+// ── Hit detection ─────────────────────────────────────────────────
+function hitNode(px,py){
+  for(let i=state.nodes.length-1;i>=0;i--){
+    const n=state.nodes[i]
+    if(px>=n.x&&px<=n.x+n.w&&py>=n.y&&py<=n.y+n.h) return n
+  }
+  return null
+}
+
+// ── Drop ──────────────────────────────────────────────────────────
+canvasWrap.addEventListener('dragover',e=>{e.preventDefault();canvasWrap.classList.add('drag-over')})
+canvasWrap.addEventListener('dragleave',()=>canvasWrap.classList.remove('drag-over'))
+canvasWrap.addEventListener('drop',e=>{
+  e.preventDefault(); canvasWrap.classList.remove('drag-over')
+  const id=e.dataTransfer.getData('serviceId')
+  if(!id||!SERVICE_MAP[id]) return
+  pushUndo()
+  const r=canvas.getBoundingClientRect()
+  const x=Math.round((e.clientX-r.left-NODE_W/2)/DOT_GAP)*DOT_GAP
+  const y=Math.round((e.clientY-r.top-NODE_H/2)/DOT_GAP)*DOT_GAP
+  state.nodes.push({uid:uidCounter++,serviceId:id,x,y,w:NODE_W,h:NODE_H})
+})
+
+// ── Mouse ─────────────────────────────────────────────────────────
+canvas.addEventListener('mousedown',e=>{
+  const {x,y}=canvasPos(e), hit=hitNode(x,y)
+  hideTooltip()
+  if(!hit) return
+  if(connectMode){
+    if(!connectFrom){
+      connectFrom=hit
+      document.getElementById('connect-hint').textContent=
+        `🔗 Now click TARGET (source: ${SERVICE_MAP[hit.serviceId].name})`
+    } else if(connectFrom!==hit){
+      pushUndo()
+      const exists=state.connections.some(
+        c=>(c.fromId===connectFrom.uid&&c.toId===hit.uid)||
+           (c.fromId===hit.uid&&c.toId===connectFrom.uid))
+      if(!exists) state.connections.push({uid:uidCounter++,fromId:connectFrom.uid,toId:hit.uid})
+      else toast('Connection already exists')
+      connectFrom=null
+      document.getElementById('connect-hint').textContent='🔗 Click source node, then target node'
+    }
+    return
+  }
+  dragTarget=hit; dragOffsetX=x-hit.x; dragOffsetY=y-hit.y
+  state.nodes.splice(state.nodes.indexOf(hit),1); state.nodes.push(hit)
+  canvas.style.cursor='grabbing'
+})
+
+let tooltipTimer=null
+canvas.addEventListener('mousemove',e=>{
+  const {x,y}=canvasPos(e)
+  if(dragTarget){
+    dragTarget.x=Math.round((x-dragOffsetX)/DOT_GAP)*DOT_GAP
+    dragTarget.y=Math.round((y-dragOffsetY)/DOT_GAP)*DOT_GAP
+    hideTooltip(); return
+  }
+  const hit=hitNode(x,y)
+  hoveredNode=hit
+  canvas.style.cursor=connectMode?'crosshair':hit?'grab':'default'
+  clearTimeout(tooltipTimer)
+  if(hit){ tooltipTimer=setTimeout(()=>showTooltip(hit,e.clientX-canvasWrap.getBoundingClientRect().left,e.clientY-canvasWrap.getBoundingClientRect().top),600) }
+  else hideTooltip()
+})
+
+canvas.addEventListener('mouseup',e=>{
+  if(dragTarget){ pushUndo() }
+  dragTarget=null
+  canvas.style.cursor=connectMode?'crosshair':'default'
+})
+canvas.addEventListener('mouseleave',()=>{ dragTarget=null; hoveredNode=null; hideTooltip() })
+
+canvas.addEventListener('dblclick',e=>{
+  if(connectMode) return
+  const {x,y}=canvasPos(e), hit=hitNode(x,y)
+  if(!hit) return
+  pushUndo()
+  state.connections=state.connections.filter(c=>c.fromId!==hit.uid&&c.toId!==hit.uid)
+  state.nodes=state.nodes.filter(n=>n!==hit)
+  toast(`Removed ${SERVICE_MAP[hit.serviceId].name}`)
+})
+
+// Keyboard shortcuts
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'){ e.preventDefault(); undo() }
+  if(e.key==='Escape'&&connectMode){ connectBtn.click() }
+  if(e.key==='Delete'||e.key==='Backspace'){
+    if(hoveredNode){
+      pushUndo()
+      state.connections=state.connections.filter(c=>c.fromId!==hoveredNode.uid&&c.toId!==hoveredNode.uid)
+      state.nodes=state.nodes.filter(n=>n!==hoveredNode)
+      hoveredNode=null
+    }
+  }
+})
+
+function canvasPos(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+
+// ── Connect mode ──────────────────────────────────────────────────
+const connectBtn=document.getElementById('connect-btn')
+const connectHint=document.getElementById('connect-hint')
+connectBtn.addEventListener('click',()=>{
+  connectMode=!connectMode; connectFrom=null
+  connectBtn.classList.toggle('active',connectMode)
+  canvasWrap.classList.toggle('connect-mode',connectMode)
+  connectHint.classList.toggle('show',connectMode)
+  canvas.style.cursor=connectMode?'crosshair':'default'
+})
+
+// ── API key ───────────────────────────────────────────────────────
+const apiKeyInput=document.getElementById('api-key-input')
+const apiStatus=document.getElementById('api-status')
+apiKeyInput.addEventListener('input',()=>{
+  const ok=apiKeyInput.value.trim().startsWith('sk-ant-')
+  apiStatus.textContent=ok?'● ready':'● no key'
+  apiStatus.className=ok?'ready':'missing'
+})
+
+// ── Save / Load diagrams ──────────────────────────────────────────
+function getSaved(){ return JSON.parse(localStorage.getItem('cloudDiagrams')||'{}') }
+function setSaved(data){ localStorage.setItem('cloudDiagrams',JSON.stringify(data)) }
+
+function saveDiagram(name){
+  const saved=getSaved()
+  saved[name]={ nodes:state.nodes, connections:state.connections, savedAt:new Date().toLocaleString() }
+  setSaved(saved)
+  renderSavedList()
+  toast(`💾 Saved "${name}"`)
+}
+
+function loadDiagram(name){
+  const saved=getSaved()
+  if(!saved[name]) return
+  pushUndo()
+  state.nodes=saved[name].nodes
+  state.connections=saved[name].connections
+  uidCounter=Math.max(...state.nodes.map(n=>n.uid),...state.connections.map(c=>c.uid),0)+1
+  toast(`📂 Loaded "${name}"`)
+}
+
+function deleteDiagram(name){
+  const saved=getSaved()
+  delete saved[name]
+  setSaved(saved)
+  renderSavedList()
+  toast(`🗑 Deleted "${name}"`)
+}
+
+function renderSavedList(){
+  const saved=getSaved()
+  const el=document.getElementById('saved-items')
+  const keys=Object.keys(saved)
+  if(!keys.length){ el.innerHTML='<div style="font-size:10px;color:var(--dim);padding:4px 0">No saved diagrams</div>'; return }
+  el.innerHTML=''
+  for(const name of keys){
+    const row=document.createElement('div')
+    row.className='saved-item'
+    row.innerHTML=`<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📐 ${name}</span>
+      <span class="saved-item-del" title="Delete">✕</span>`
+    row.querySelector('span:first-child').addEventListener('click',()=>loadDiagram(name))
+    row.querySelector('.saved-item-del').addEventListener('click',e=>{ e.stopPropagation(); deleteDiagram(name) })
+    el.appendChild(row)
+  }
+}
+
+// Save button → show modal
+document.getElementById('save-btn').addEventListener('click',()=>{
+  if(!state.nodes.length){ toast('Add services first!'); return }
+  document.getElementById('diagram-name').value=''
+  document.getElementById('modal-overlay').classList.add('show')
+  setTimeout(()=>document.getElementById('diagram-name').focus(),100)
+})
+document.getElementById('modal-cancel').addEventListener('click',()=>{
+  document.getElementById('modal-overlay').classList.remove('show')
+})
+document.getElementById('modal-save').addEventListener('click',()=>{
+  const name=document.getElementById('diagram-name').value.trim()||'Untitled'
+  saveDiagram(name)
+  document.getElementById('modal-overlay').classList.remove('show')
+})
+document.getElementById('diagram-name').addEventListener('keydown',e=>{
+  if(e.key==='Enter') document.getElementById('modal-save').click()
+  if(e.key==='Escape') document.getElementById('modal-cancel').click()
+})
+
+// ── Export PNG ────────────────────────────────────────────────────
+document.getElementById('export-btn').addEventListener('click',async()=>{
+  if(!state.nodes.length){ toast('Add services first!'); return }
+  toast('⏳ Generating PNG...')
+  try{
+    const exportCanvas=document.createElement('canvas')
+    const scale=2
+    exportCanvas.width=canvas.clientWidth*scale
+    exportCanvas.height=canvas.clientHeight*scale
+    const ectx=exportCanvas.getContext('2d')
+    ectx.scale(scale,scale)
+    // Background
+    ectx.fillStyle='#0a0a18'; ectx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight)
+    // Grid
+    ectx.fillStyle='#1e1e40'
+    for(let x=DOT_GAP;x<canvas.clientWidth;x+=DOT_GAP)
+      for(let y=DOT_GAP;y<canvas.clientHeight;y+=DOT_GAP){ectx.beginPath();ectx.arc(x,y,1,0,Math.PI*2);ectx.fill()}
+    // Connections (static — no animation)
+    for(const c of state.connections){
+      const from=state.nodes.find(n=>n.uid===c.fromId)
+      const to=state.nodes.find(n=>n.uid===c.toId)
+      if(!from||!to) continue
+      const {cx:x1,cy:y1}=nodeCenter(from), {cx:x2,cy:y2}=nodeCenter(to)
+      const dx=x2-x1, dy=y2-y1
+      const cp1x=x1+dx*0.25, cp1y=y1+Math.abs(dy)*0.4+40
+      const cp2x=x2-dx*0.25, cp2y=y2+Math.abs(dy)*0.4+40
+      ectx.strokeStyle='#4f8effaa'; ectx.lineWidth=2; ectx.setLineDash([6,6])
+      ectx.beginPath(); ectx.moveTo(x1,y1)
+      ectx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,x2,y2); ectx.stroke()
+      ectx.setLineDash([])
+    }
+    // Nodes — swap context temporarily
+    const origCtx=ctx
+    const savedCtx={fillStyle:ectx.fillStyle}
+    // Draw each node onto export canvas
+    for(const node of state.nodes){
+      const svc=SERVICE_MAP[node.serviceId]
+      const {x,y,w,h}=node
+      ectx.shadowColor='rgba(0,0,0,0.5)'; ectx.shadowBlur=8; ectx.shadowOffsetY=3
+      ectx.fillStyle='#12122a'; roundRectE(ectx,x,y,w,h,10); ectx.fill()
+      ectx.shadowBlur=0; ectx.shadowOffsetY=0
+      ectx.strokeStyle=svc.color+'55'; ectx.lineWidth=1; roundRectE(ectx,x,y,w,h,10); ectx.stroke()
+      ectx.fillStyle=svc.color+'33'; roundRectTopE(ectx,x,y,w,22,10); ectx.fill()
+      ectx.font='15px serif'; ectx.textAlign='left'; ectx.fillStyle='#fff'
+      ectx.fillText(svc.emoji,x+7,y+15)
+      ectx.font='bold 11px JetBrains Mono,monospace'; ectx.fillStyle='#fff'
+      ectx.fillText(svc.name,x+7,y+37)
+      ectx.font='9px JetBrains Mono,monospace'; ectx.fillStyle=svc.color+'cc'
+      ectx.fillText(svc.desc,x+7,y+51)
+    }
+    // Watermark
+    ectx.font='11px JetBrains Mono,monospace'; ectx.fillStyle='#ffffff22'; ectx.textAlign='right'
+    ectx.fillText('☁️ Cloud Architect',canvas.clientWidth-12,canvas.clientHeight-12)
+
+    const link=document.createElement('a')
+    link.download='architecture.png'
+    link.href=exportCanvas.toDataURL('image/png')
+    link.click()
+    toast('✅ PNG exported!')
+  } catch(err){ toast('❌ Export failed: '+err.message) }
+})
+
+function roundRectE(c,x,y,w,h,r){
+  c.beginPath()
+  c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.arcTo(x+w,y,x+w,y+r,r)
+  c.lineTo(x+w,y+h-r);c.arcTo(x+w,y+h,x+w-r,y+h,r)
+  c.lineTo(x+r,y+h);c.arcTo(x,y+h,x,y+h-r,r)
+  c.lineTo(x,y+r);c.arcTo(x,y,x+r,y,r);c.closePath()
+}
+function roundRectTopE(c,x,y,w,h,r){
+  c.beginPath()
+  c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.arcTo(x+w,y,x+w,y+r,r)
+  c.lineTo(x+w,y+h);c.lineTo(x,y+h);c.lineTo(x,y+r)
+  c.arcTo(x,y,x+r,y,r);c.closePath()
+}
+
+// ── AI Review ─────────────────────────────────────────────────────
+function describeArch(){
+  if(!state.nodes.length) return null
+  const nodeLines=state.nodes.map(n=>`  - ${SERVICE_MAP[n.serviceId].name} (${SERVICE_MAP[n.serviceId].desc})`)
+  const connLines=state.connections.map(c=>{
+    const f=state.nodes.find(n=>n.uid===c.fromId), t=state.nodes.find(n=>n.uid===c.toId)
+    return f&&t?`  - ${SERVICE_MAP[f.serviceId].name} → ${SERVICE_MAP[t.serviceId].name}`:null
+  }).filter(Boolean)
+  return `AWS Services used:\n${nodeLines.join('\n')}`
+    +(connLines.length?`\n\nConnections:\n${connLines.join('\n')}`:'\n\nNo connections defined.')
+}
+
+function buildReviewPrompt(arch){
+  return `You are a senior AWS Solutions Architect with 10+ years of experience.
+A student has built the following cloud architecture and wants expert review.
+
+${arch}
+
+Review this architecture in EXACTLY this structure:
+
+## 🏆 Overall Score
+Score out of 10 and one sentence summary.
+
+## ✅ What's Good
+2-3 specific things done well.
+
+## ⚠️ Security Concerns
+Missing or misconfigured security services.
+
+## 📈 Scalability & Performance
+Can it handle traffic spikes? What's missing?
+
+## 💰 Cost Optimisation
+Cost concerns or cheaper alternatives.
+
+## 🔧 Missing Components
+Critical services missing for production readiness.
+
+## 🎯 Top 3 Action Items
+The 3 most important changes, in priority order.
+
+Be specific, educational, and reference actual AWS service names.`
+}
+
+async function runAIReview(){
+  const apiKey=apiKeyInput.value.trim()
+  const arch=describeArch()
+  if(!arch){ toast('Add services to your diagram first!'); return }
+  if(!apiKey){ toast('Enter your Anthropic API key first!'); return }
+  const reviewPanel=document.getElementById('review-panel')
+  const reviewBody=document.getElementById('review-body')
+  reviewPanel.classList.add('open')
+  reviewBody.innerHTML=`<div style="display:flex;align-items:center;gap:10px;color:var(--dim);padding:8px;font-size:12px;"><div class="spinner"></div>Analyzing architecture...</div>`
+  const aiBtn=document.getElementById('ai-btn')
+  aiBtn.disabled=true; aiBtn.textContent='⏳ Reviewing...'
+  try{
+    const response=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,stream:true,
+        messages:[{role:'user',content:buildReviewPrompt(arch)}]})
+    })
+    if(!response.ok){ const e=await response.json(); throw new Error(e.error?.message||`API error ${response.status}`) }
+    reviewBody.innerHTML=''
+    const textDiv=document.createElement('div'); textDiv.className='review-text'; textDiv.id='review-stream'
+    reviewBody.appendChild(textDiv)
+    const cursor=document.createElement('span'); cursor.className='cursor'; reviewBody.appendChild(cursor)
+    const reader=response.body.getReader(), decoder=new TextDecoder()
+    let fullText=''
+    while(true){
+      const {done,value}=await reader.read(); if(done) break
+      const chunk=decoder.decode(value,{stream:true})
+      for(const line of chunk.split('\n')){
+        if(!line.startsWith('data: ')) continue
+        const data=line.slice(6).trim(); if(data==='[DONE]') break
+        try{
+          const p=JSON.parse(data)
+          if(p.type==='content_block_delta'&&p.delta?.type==='text_delta'){
+            fullText+=p.delta.text; textDiv.textContent=fullText
+            reviewBody.scrollTop=reviewBody.scrollHeight
+          }
+        }catch{}
+      }
+    }
+    cursor.remove()
+    renderReview(fullText)
+  }catch(err){
+    reviewBody.innerHTML=`<div style="color:var(--red);font-size:12px;padding:10px;border:1px solid #ff475733;border-radius:8px">❌ ${err.message}</div>`
+  }finally{ aiBtn.disabled=false; aiBtn.textContent='✨ AI Review' }
+}
+
+function renderReview(text){
+  const rb=document.getElementById('review-body'); rb.innerHTML=''
+  const scoreMatch=text.match(/(\d+)\s*\/\s*10/)
+  if(scoreMatch){
+    const score=parseInt(scoreMatch[1])
+    const cls=score>=7?'score-high':score>=4?'score-mid':'score-low'
+    const badge=document.createElement('div'); badge.className=`score-badge ${cls}`
+    badge.innerHTML=`⭐ Architecture Score: ${score}/10`; rb.appendChild(badge)
+  }
+  const sections=text.split(/\n##\s+/).filter(Boolean)
+  for(const section of sections){
+    if(section.includes('Overall Score')) continue
+    const lines=section.trim().split('\n')
+    const title=lines[0].replace(/^#+\s*/,'').trim()
+    const body=lines.slice(1).join('\n').trim()
+    const div=document.createElement('div'); div.className='review-section'
+    div.innerHTML=`<div class="review-section-title">${title}</div><div class="review-text">${body}</div>`
+    rb.appendChild(div)
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath()
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r)
+  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r)
+  ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r)
+  ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath()
+}
+function roundRectTop(ctx,x,y,w,h,r){
+  ctx.beginPath()
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r)
+  ctx.lineTo(x+w,y+h);ctx.lineTo(x,y+h);ctx.lineTo(x,y+r)
+  ctx.arcTo(x,y,x+r,y,r);ctx.closePath()
+}
+function updateStats(){
+  document.getElementById('stat-nodes').textContent=state.nodes.length
+  document.getElementById('stat-conn').textContent=state.connections.length
+  if(state.nodes.length>0)
+    document.getElementById('stat-hint').textContent=
+      '🔗 Connect · Double-click remove · Del key · Ctrl+Z undo · 💾 Save'
+}
+function toast(msg,duration=2500){
+  const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show')
+  setTimeout(()=>el.classList.remove('show'),duration)
+}
+
+// ── Button wiring ─────────────────────────────────────────────────
+document.getElementById('ai-btn').addEventListener('click',runAIReview)
+document.getElementById('close-review').addEventListener('click',()=>document.getElementById('review-panel').classList.remove('open'))
+document.getElementById('clear-btn').addEventListener('click',()=>{ pushUndo(); state.nodes=[]; state.connections=[]; connectFrom=null; toast('Canvas cleared') })
+document.getElementById('undo-btn').addEventListener('click',undo)
+
+window.addEventListener('resize',resizeCanvas)
+resizeCanvas()
+renderSavedList()
+animLoop()
+</script>
+</body>
+</html>
