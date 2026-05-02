@@ -86,9 +86,9 @@ To use the **AI Review feature**:
 
 ---
 
-## 📸 Export Diagram
+## Running Website
+---  https://cloud-architect-deploy.vercel.app/
 
-Click **📸 Export PNG** to download your architecture as an image.
 
 ---
 
