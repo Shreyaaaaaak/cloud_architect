@@ -1,129 +1,139 @@
 # ☁️ Cloud Architect
 
-An interactive **AWS architecture diagram builder** with drag-and-drop functionality, real-time visualization, and AI-powered architecture review.
+> An interactive **AWS architecture diagram builder** — drag, drop, connect, and get AI-powered architecture reviews right in the browser.
 
-## 🚀 Features
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-cloud--architect--deploy.vercel.app-brightgreen?style=flat-square&logo=vercel)](https://cloud-architect-deploy.vercel.app/)
+![HTML](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
+![Claude AI](https://img.shields.io/badge/Claude%20AI-Anthropic-blueviolet?style=flat-square)
+![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
-- 🧩 **Drag & Drop AWS Services**  
-  Easily add services like EC2, S3, Lambda, RDS, etc. onto a canvas.
-
-- 🔗 **Connect Services**  
-  Create relationships between components with a visual connection system.
-
-- 🧠 **AI Architecture Review**  
-  Get expert-level feedback on your architecture using Claude AI.
-
-- 💾 **Save & Load Diagrams**  
-  Store your designs locally and reload them anytime.
-
-- 📸 **Export as PNG**  
-  Export your architecture diagrams as high-quality images.
-
-- 🔍 **Search AWS Services**  
-  Quickly find services using the built-in search.
-
-- 🗺️ **Mini-map Navigation**  
-  Visual overview for large architectures.
-
-- ↩ **Undo / Clear Canvas**  
-  Efficient editing with undo support.
+**[→ Try it live](https://cloud-architect-deploy.vercel.app/)**
 
 ---
 
-## 🛠️ Tech Stack
+## What it does
 
-- **Frontend:** HTML, CSS, JavaScript (Vanilla)
-- **Canvas Rendering:** HTML5 Canvas API
-- **AI Integration:** Claude API (Anthropic)
-- **Storage:** LocalStorage (for saved diagrams)
-- **Export:** Canvas-based PNG generation
+Design AWS architectures visually without any cloud account needed. Drag services onto a canvas, connect them, then ask Claude AI to review your design for best practices, security gaps, and cost considerations.
+
+![Demo preview — drag-and-drop AWS diagram builder with AI review panel]
 
 ---
 
-## 📂 Project Structure
+## Features
 
-```
-Cloud-Architect/
- ├── cloud_architect.html
- └── README.md
-```
+| Feature | Description |
+|---------|-------------|
+| Drag & drop canvas | Add EC2, S3, Lambda, RDS, and 15+ AWS services |
+| Visual connections | Click to draw arrows between services |
+| AI architecture review | Claude AI reviews your design for best practices |
+| Save & load | Diagrams persist in browser LocalStorage |
+| Export as PNG | Download your architecture as an image |
+| Service search | Find AWS services quickly from the sidebar |
+| Mini-map | Overview panel for large diagrams |
+| Undo support | `Ctrl+Z` for mistake recovery |
 
 ---
 
-## ⚙️ Setup & Usage
+## Demo
 
-### 1. Clone the Repository
-```
-git clone https://github.com/your-username/cloud-architect.git
-cd cloud-architect
-```
+**[→ cloud-architect-deploy.vercel.app](https://cloud-architect-deploy.vercel.app/)**
 
-### 2. Open the App
-Simply open the HTML file in your browser:
-```
+No installation needed — runs entirely in the browser.
+
+### How to use the AI Review
+
+1. Design your architecture on the canvas
+2. Enter your Anthropic API key (`sk-ant-...`) in the input field
+3. Click **✨ AI Review** — Claude analyses your diagram and returns feedback
+
+> Get a free API key at [console.anthropic.com](https://console.anthropic.com)
+
+---
+
+## Running locally
+
+```bash
+# Clone the repo
+git clone https://github.com/Shreyaaaaaak/cloud_architect.git
+cd cloud_architect
+
+# Open directly in browser — no server or install needed
 open cloud_architect.html
 ```
 
 ---
 
-## 🔑 AI Review Setup
+## Architecture
 
-To use the **AI Review feature**:
+```
+Browser
+  │
+  ├── HTML5 Canvas API       ← renders the diagram
+  ├── Vanilla JS             ← drag-and-drop, connection logic
+  ├── LocalStorage           ← save/load diagrams
+  ├── Canvas → PNG export    ← screenshot utility
+  └── Anthropic Claude API   ← AI review (client-side fetch)
+```
 
-1. Get an API key from Anthropic  
-2. Enter the key in the input field (format: `sk-ant-...`)  
-3. Click **✨ AI Review**
-
----
-
-## 🎮 How to Use
-
-- Drag services from the sidebar to the canvas  
-- Click **🔗 Connect** to link components  
-- Double-click a node to delete it  
-- Press `Delete` or `Backspace` to remove selected nodes  
-- Use `Ctrl + Z` for undo  
+No backend. No build step. Everything runs in a single HTML file.
 
 ---
 
-## Running Website
----  https://cloud-architect-deploy.vercel.app/
+## Tech Stack
 
-
----
-
-## 💡 Example Use Cases
-
-- Designing AWS system architectures  
-- Learning cloud service relationships  
-- Preparing for cloud certifications  
-- Portfolio/demo projects  
+- **Frontend:** HTML5, CSS3, Vanilla JavaScript
+- **Rendering:** HTML5 Canvas API
+- **AI:** Claude API (Anthropic) — client-side
+- **Storage:** Browser LocalStorage
+- **Deployment:** Vercel
 
 ---
 
-## ⚠️ Limitations
+## Project Structure
 
-- Works fully in-browser (no backend)
-- Diagrams are stored locally (browser storage)
-- Requires API key for AI review feature
-
----
-
-## 🔮 Future Improvements
-
-- Multi-cloud support (Azure, GCP)
-- Collaboration / sharing features
-- Backend storage for diagrams
-- Pre-built architecture templates
+```
+cloud_architect/
+├── cloud_architect.html    # Entire app — canvas, logic, and styles
+└── README.md
+```
 
 ---
 
-## 👩‍💻 Author
+## Example use cases
 
-Shreya Kaushik
+- Designing multi-tier AWS architectures (VPC, ALB, EC2, RDS)
+- Studying for AWS certifications — visualise service relationships
+- Creating architecture diagrams for project presentations
+- Getting instant AI feedback on architecture decisions
 
 ---
 
-## 📄 License
+## Limitations
 
-This project is open-source and available under the MIT License.
+- Diagrams stored in browser only (no account/cloud sync)
+- Requires your own Anthropic API key for AI review
+- Single-page app — no collaboration features yet
+
+---
+
+## Future improvements
+
+- [ ] Multi-cloud support (Azure, GCP icons)
+- [ ] Shareable diagram links
+- [ ] Pre-built architecture templates (3-tier web app, serverless, etc.)
+- [ ] Backend storage with user accounts
+- [ ] Export to AWS CloudFormation / Terraform
+
+---
+
+## Built by
+
+**Shreya Kaushik** — ECE @ KIIT University (2027)  
+[GitHub](https://github.com/Shreyaaaaaak) · [LinkedIn](https://www.linkedin.com/in/shreyakaushik2308)
+
+---
+
+## License
+
+MIT — open to fork and build on.
