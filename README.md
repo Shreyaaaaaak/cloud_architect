@@ -16,7 +16,7 @@
 
 Design AWS architectures visually without any cloud account needed. Drag services onto a canvas, connect them, then ask Claude AI to review your design for best practices, security gaps, and cost considerations.
 
-![Demo preview — drag-and-drop AWS diagram builder with AI review panel]
+![Cloud Architect demo — AWS diagram builder showing EC2, Lambda, S3, and KMS connected with an AI Review panel](screenshots/demo.png)
 
 ---
 
